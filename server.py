@@ -1,8 +1,17 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from main import * 
 import re
 
 app = FastAPI(title="Assistente IA", description="Um assistente para auxiliar no aprendizado de Python")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permite todos os domínios, modifique para um domínio específico em produção
+    allow_credentials=True,
+    allow_methods=["*"],  # Permite todos os métodos, como GET, POST, etc.
+    allow_headers=["*"],  # Permite todos os cabeçalhos
+)
 
 def formatar_saida(questao: str) -> str:
     questao_formatada = re.sub(r'\*\*(.*?)\*\*', r'\1:', questao)
