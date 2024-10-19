@@ -7,10 +7,10 @@ app = FastAPI(title="Assistente IA", description="Um assistente para auxiliar no
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite todos os domínios, modifique para um domínio específico em produção
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Permite todos os métodos, como GET, POST, etc.
-    allow_headers=["*"],  # Permite todos os cabeçalhos
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 def formatar_saida(questao: str) -> str:
@@ -39,6 +39,11 @@ async def api_dar_feedback(codigo: str):
     feedback_formatada = formatar_saida(feedback)
 
     return {"feedback": feedback_formatada}
+
+@app.post("/classificar-nivel")
+async def classificar_nivel(resposta1: str, resposta2: str, resposta3: str):
+    nivel = classificar_nivel(resposta1, resposta2, resposta3)
+    return {"nivel": nivel}
 
 if __name__ == "__main__":
     import uvicorn
