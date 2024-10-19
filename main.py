@@ -34,9 +34,7 @@ def dar_feedback(codigo):
     return parser.invoke(resposta)
 
 def classificar_nivel_estudante(resposta1, resposta2, resposta3):
-    message = HumanMessage(content=f"Classifique se o estudante tem o nivel iniciante, intermediário ou avançado em programação com o texto a seguir:
-    \nQual é o seu nível de conhecimento em programação?\n 
-    Resposta: {resposta1}\n Com qual linguagem de programação você já teve contato? \n Resposta: {resposta2}\n Qual é o seu objetivo ao aprender programação?\n Resposta: {resposta3}.\n quero uma saída onde uma linha vai ter o nivel que você classificou e em outra o linha o por que essa pessoa está nesse nivel")
+    message = HumanMessage(content=f"Classifique se o estudante tem o nivel iniciante, intermediário ou avançado em programação com o texto a seguir: \nQual é o seu nível de conhecimento em programação?\n Resposta: {resposta1}\n Com qual linguagem de programação você já teve contato? \n Resposta: {resposta2}\n Qual é o seu objetivo ao aprender programação?\n Resposta: {resposta3}.\n quero uma saída onde uma linha vai ter o nivel que você classificou e em outra o linha o por que essa pessoa está nesse nivel")
     resposta = llm.invoke([message])
     parser = StrOutputParser()
     
