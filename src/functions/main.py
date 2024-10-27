@@ -49,3 +49,19 @@ def classificar_nivel_estudante(resposta1, resposta2, resposta3):
     parser = StrOutputParser()
 
     return parser.invoke(resposta)
+
+def gerar_questionario_questao():
+    message = HumanMessage(content=f"Crie uma questão objetiva sobre algoritmo")
+    resposta = llm.invoke([message])
+    parser = StrOutputParser()
+
+    return parser.invoke(resposta)
+
+def verificar_repostas_questionario(questao, resposta):
+    message = HumanMessage(
+        content=f"Verifique se a resposta à questão '{questao}' é válida:\n{resposta}, mas se for errada explique sem da a resposta correta"
+        )
+    resposta = llm.invoke([message])
+    parser = StrOutputParser()
+
+    return parser.invoke(resposta)

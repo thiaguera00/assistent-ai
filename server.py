@@ -1,13 +1,17 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from main import *
+from src.functions.main import *
 import re
 
 class ClassificarNivelInput(BaseModel):
     resposta1: str
     resposta2: str
     resposta3: str
+
+class RespostaRequest(BaseModel):
+    questao: str
+    resposta: str
 
 app = FastAPI(title="Assistente IA", description="Um assistente para auxiliar no aprendizado de Python")
 
@@ -61,6 +65,18 @@ async def api_classificar_nivel(input_data: ClassificarNivelInput):
     except Exception as e:
         print("Erro ao classificar o nível do estudante:", e)
         return {"erro": "Ocorreu um erro ao classificar o nível do estudante."}
+    
+@app.post("/gerar_questionario")
+def gerar_questionario_algoritmo():
+    questionario = gerar_questionario_questao()
+    
+    return {'questionario': questionario}
+
+@app.post("/verficar_resposta_questionario")
+def resposta_questionario(payload: RespostaRequest):
+    resposta = verificar_repostas_questionario(payload.questao, payload.resposta)
+    
+    return {'resposta': resposta}
 
 if __name__ == "__main__":
     import uvicorn
