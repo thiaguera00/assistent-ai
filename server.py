@@ -72,7 +72,7 @@ def gerar_questionario_algoritmo():
     
     return {'questionario': questionario}
 
-@app.post("/verficar_resposta_questionario")
+@app.post("/verificar_resposta_questionario")
 def resposta_questionario(payload: RespostaRequest):
     resposta = verificar_respostas_questionario(payload.questao, payload.resposta)
     
