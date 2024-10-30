@@ -57,11 +57,38 @@ def gerar_questionario_questao():
 
     return parser.invoke(resposta)
 
-def verificar_repostas_questionario(questao, resposta):
+def verificar_respostas_questionario(questao, resposta):
     message = HumanMessage(
-        content=f"Verifique se a resposta à questão '{questao}' é válida:\n{resposta}, mas se for errada explique sem da a resposta correta"
-        )
-    resposta = llm.invoke([message])
+        content=f"""
+        Verifique se a resposta à questão abaixo está correta.
+        Questão: {questao}
+        Resposta do usuário: {resposta}
+        
+        Por favor, responda se a resposta está correta ou incorreta.
+        Se estiver incorreta, explique detalhadamente o porquê, mas sem revelar a resposta correta.
+        
+        Formato de resposta esperado:
+        - Correto: [sim/não]
+        - Explicação: [forneça uma explicação detalhada]
+        """
+    )
+    resposta_da_ia = llm.invoke([message])
     parser = StrOutputParser()
+    resposta_str = parser.invoke(resposta_da_ia)
 
-    return parser.invoke(resposta)
+    lines = resposta_str.split('\n')
+    correto = False
+    mensagem = ""
+
+    for line in lines:
+        if "Correto:" in line:
+            if "sim" in line.lower():
+                correto = True
+        elif "Explicação:" in line:
+            mensagem = line.replace("Explicação:", "").strip()
+
+    return {
+        "correto": correto,
+        "mensagem": mensagem
+    }
+

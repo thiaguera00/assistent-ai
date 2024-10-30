@@ -74,7 +74,7 @@ def gerar_questionario_algoritmo():
 
 @app.post("/verficar_resposta_questionario")
 def resposta_questionario(payload: RespostaRequest):
-    resposta = verificar_repostas_questionario(payload.questao, payload.resposta)
+    resposta = verificar_respostas_questionario(payload.questao, payload.resposta)
     
     return {'resposta': resposta}
 
