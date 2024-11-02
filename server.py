@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from src.functions.main import *
+from src.functions.main import *  # Importando suas funções principais
 import re
 
 class ClassificarNivelInput(BaseModel):
@@ -12,6 +12,10 @@ class ClassificarNivelInput(BaseModel):
 class RespostaRequest(BaseModel):
     questao: str
     resposta: str
+
+class GerarQuestaoRequest(BaseModel):
+    conteudo: str
+    nivel: str = "normal"
 
 app = FastAPI(title="Assistente IA", description="Um assistente para auxiliar no aprendizado de Python")
 
@@ -30,12 +34,48 @@ def formatar_saida(questao: str) -> str:
     return questao_formatada
 
 @app.post("/gerar-questao/")
-def api_gerar_questao(nivel: str, conteudo: str):
-    questao = gerar_questao(nivel, conteudo)
+def api_gerar_questao(request: GerarQuestaoRequest):
+    """Gera uma questão com base no conteúdo e nível de dificuldade especificado"""
+    questao = gerar_questionario_questao(request.conteudo, dificuldade=request.nivel)
     questao_formatada = formatar_saida(questao)
     
     return {"questao": questao_formatada}
 
+def extrair_conteudo_da_questao(questao: str) -> str:
+    """
+    Tenta extrair dinamicamente o conteúdo da questão.
+    Neste exemplo, vamos supor que o conteúdo esteja na primeira linha ou 
+    que possamos deduzir de palavras-chave.
+    """
+    palavras_chave = ["algoritmo", "variáveis", "estruturas de controle", "loops", "funções", "tipos de dados", "listas", "condicionais"]
+
+    for palavra in palavras_chave:
+        if palavra.lower() in questao.lower():
+            return palavra
+
+    return "conteúdo geral"
+
+@app.post("/verificar-resposta-questionario/")
+def api_verificar_resposta_questionario(payload: RespostaRequest):
+    """Verifica a resposta de uma questão e fornece feedback detalhado"""
+    resposta = verificar_resposta_questionario(payload.questao, payload.resposta)
+
+    if not resposta["correto"]:
+        conteudo = extrair_conteudo_da_questao(payload.questao)
+
+        nova_questao = gerar_questionario_questao(conteudo, dificuldade="fácil")
+        nova_questao_formatada = formatar_saida(nova_questao)
+
+        return {
+            "correto": False,
+            "mensagem": resposta["mensagem"],
+            "nova_questao": nova_questao_formatada
+        }
+    else:
+        return {
+            "correto": True,
+            "mensagem": resposta["mensagem"]
+        }
 @app.post("/corrigir-codigo/")
 def api_corrigir_codigo(codigo: str):
     correcao = corrigir_codigo(codigo)
@@ -65,18 +105,6 @@ async def api_classificar_nivel(input_data: ClassificarNivelInput):
     except Exception as e:
         print("Erro ao classificar o nível do estudante:", e)
         return {"erro": "Ocorreu um erro ao classificar o nível do estudante."}
-    
-@app.post("/gerar_questionario")
-def gerar_questionario_algoritmo():
-    questionario = gerar_questionario_questao()
-    
-    return {'questionario': questionario}
-
-@app.post("/verificar_resposta_questionario")
-def resposta_questionario(payload: RespostaRequest):
-    resposta = verificar_respostas_questionario(payload.questao, payload.resposta)
-    
-    return {'resposta': resposta}
 
 if __name__ == "__main__":
     import uvicorn

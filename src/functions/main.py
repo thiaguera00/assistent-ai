@@ -50,14 +50,19 @@ def classificar_nivel_estudante(resposta1, resposta2, resposta3):
 
     return parser.invoke(resposta)
 
-def gerar_questionario_questao():
-    message = HumanMessage(content=f"Crie uma questão objetiva sobre algoritmo")
+def gerar_questionario_questao(conteudo, dificuldade="normal"):
+    if dificuldade == "fácil":
+        message_content = f"Crie uma questão objetiva fácil sobre o conteúdo {conteudo}, adequada para iniciantes."
+    else:
+        message_content = f"Crie uma questão objetiva sobre o conteúdo {conteudo}."
+
+    message = HumanMessage(content=message_content)
     resposta = llm.invoke([message])
     parser = StrOutputParser()
 
     return parser.invoke(resposta)
 
-def verificar_respostas_questionario(questao, resposta):
+def verificar_resposta_questionario(questao, resposta):
     message = HumanMessage(
         content=f"""
         Verifique se a resposta à questão abaixo está correta.
@@ -91,4 +96,19 @@ def verificar_respostas_questionario(questao, resposta):
         "correto": correto,
         "mensagem": mensagem
     }
+
+def realizar_questionario(conteudo, resposta_usuario):
+    questao = gerar_questionario_questao(conteudo, dificuldade="normal")
+    resultado = verificar_resposta_questionario(questao, resposta_usuario)
+
+    if resultado["correto"]:
+        print("Parabéns! Resposta correta! 🎉")
+        print(f"Explicação: {resultado['mensagem']}")
+    else:
+        print("Resposta incorreta. Vamos tentar com uma questão mais fácil.")
+        print(f"Explicação: {resultado['mensagem']}")
+
+        questao_facil = gerar_questionario_questao(conteudo, dificuldade="fácil")
+        print("\nAqui está uma nova questão para você praticar:\n")
+        print(questao_facil)
 
