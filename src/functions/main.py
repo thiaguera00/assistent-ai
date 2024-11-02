@@ -108,7 +108,8 @@ def realizar_questionario(conteudo, resposta_usuario):
         print("Resposta incorreta. Vamos tentar com uma questão mais fácil.")
         print(f"Explicação: {resultado['mensagem']}")
 
-        questao_facil = gerar_questionario_questao(conteudo, dificuldade="fácil")
+        parser = StrOutputParser()
+        resposta_str = parser.invoke(questao)
         print("\nAqui está uma nova questão para você praticar:\n")
-        print(questao_facil)
+        print(resposta_str)
 

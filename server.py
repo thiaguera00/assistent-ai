@@ -60,22 +60,11 @@ def api_verificar_resposta_questionario(payload: RespostaRequest):
     """Verifica a resposta de uma questão e fornece feedback detalhado"""
     resposta = verificar_resposta_questionario(payload.questao, payload.resposta)
 
-    if not resposta["correto"]:
-        conteudo = extrair_conteudo_da_questao(payload.questao)
+    return {
+        "correto": resposta["correto"],
+        "mensagem": resposta["mensagem"]
+    }
 
-        nova_questao = gerar_questionario_questao(conteudo, dificuldade="fácil")
-        nova_questao_formatada = formatar_saida(nova_questao)
-
-        return {
-            "correto": False,
-            "mensagem": resposta["mensagem"],
-            "nova_questao": nova_questao_formatada
-        }
-    else:
-        return {
-            "correto": True,
-            "mensagem": resposta["mensagem"]
-        }
 @app.post("/corrigir-codigo/")
 def api_corrigir_codigo(codigo: str):
     correcao = corrigir_codigo(codigo)
