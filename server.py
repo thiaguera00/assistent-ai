@@ -90,6 +90,13 @@ def api_dar_feedback(codigo: str):
 
     return {"feedback": feedback_formatada}
 
+@app.post("/gerar-questionario/")
+def api_gerar_questionario(request: GerarQuestaoRequest):
+    """Gera uma questão de questionário com base no conteúdo e nível de dificuldade especificado"""
+    questao = gerar_questionario_questao(request.conteudo, dificuldade=request.nivel)
+    questao_formatada = formatar_saida(questao)
+    return {"questao": questao_formatada}
+
 @app.post("/classificar-nivel/")
 async def api_classificar_nivel(input_data: ClassificarNivelInput):
     resposta1 = input_data.resposta1
