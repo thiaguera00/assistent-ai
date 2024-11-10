@@ -50,11 +50,13 @@ def classificar_nivel_estudante(resposta1, resposta2, resposta3):
 
     return parser.invoke(resposta)
 
-def gerar_questionario_questao(conteudo, dificuldade="normal"):
-    if dificuldade == "fácil":
-        message_content = f"Crie uma questão objetiva fácil sobre o conteúdo {conteudo}, adequada para iniciantes."
-    else:
-        message_content = f"Crie uma questão objetiva sobre o conteúdo {conteudo}."
+def gerar_questionario_questao(conteudo):
+    message_content = (
+        f"Crie uma questão objetiva de múltipla escolha sobre o conteúdo '{conteudo}', adequada para iniciantes. "
+        f"A questão deve ter exatamente quatro alternativas, sendo apenas **uma delas correta**. "
+        f"As três alternativas incorretas devem ser plausíveis, mas claramente erradas para alguém que entenda o básico do conteúdo. "
+        f"Inclua também o raciocínio necessário para identificar a resposta correta."
+    )
 
     message = HumanMessage(content=message_content)
     resposta = llm.invoke([message])

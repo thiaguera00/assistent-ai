@@ -15,7 +15,6 @@ class RespostaRequest(BaseModel):
 
 class GerarQuestaoRequest(BaseModel):
     conteudo: str
-    nivel: str = "normal"
 
 app = FastAPI(title="Assistente IA", description="Um assistente para auxiliar no aprendizado de Python")
 
@@ -82,7 +81,7 @@ def api_dar_feedback(codigo: str):
 @app.post("/gerar-questionario/")
 def api_gerar_questionario(request: GerarQuestaoRequest):
     """Gera uma questão de questionário com base no conteúdo e nível de dificuldade especificado"""
-    questao = gerar_questionario_questao(request.conteudo, dificuldade=request.nivel)
+    questao = gerar_questionario_questao(request.conteudo)
     questao_formatada = formatar_saida(questao)
     return {"questao": questao_formatada}
 
