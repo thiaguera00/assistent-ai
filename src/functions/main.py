@@ -3,6 +3,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.output_parsers import StrOutputParser
 from dotenv import load_dotenv
 import os
+import re
 
 def init_llm():
     load_dotenv()
@@ -61,8 +62,11 @@ def gerar_questionario_questao(conteudo):
     message = HumanMessage(content=message_content)
     resposta = llm.invoke([message])
     parser = StrOutputParser()
+    questao_completa = parser.invoke(resposta)
 
-    return parser.invoke(resposta)
+    return {
+        "questao": questao_completa
+    }
 
 def verificar_resposta_questionario(questao, resposta):
     message = HumanMessage(
