@@ -68,25 +68,33 @@ def gerar_questionario_questao(conteudo):
         "questao": questao_completa
     }
 
-def verificar_resposta_questionario(questao, resposta):
-    message = HumanMessage(
-        content=f"""
-        Verifique se a resposta à questão abaixo está correta.
-        Questão: {questao}
-        Resposta do usuário: {resposta}
-        
-        Por favor, responda se a resposta está correta ou incorreta.
-        Se estiver incorreta, explique detalhadamente o porquê, mas sem revelar a resposta correta.
-        
-        Formato de resposta esperado:
-        - Correto: [sim/não]
-        - Explicação: [forneça uma explicação detalhada]
-        """
-    )
+def verificar_resposta_questionario(enunciado, alternativas, resposta):
+    # Criar uma string com todas as alternativas formatadas
+    alternativas_str = "\n".join(alternativas)
+
+    message_content = f"""
+    Verifique se a resposta à questão abaixo está correta.
+
+    Enunciado da Questão: {enunciado}
+    Alternativas:
+    {alternativas_str}
+
+    Resposta do usuário: {resposta}
+
+    Por favor, responda se a resposta está correta ou incorreta.
+    Se estiver incorreta, explique detalhadamente o porquê, mas sem revelar a resposta correta.
+
+    Formato de resposta esperado:
+    - Correto: [sim/não]
+    - Explicação: [forneça uma explicação detalhada]
+    """
+
+    message = HumanMessage(content=message_content)
     resposta_da_ia = llm.invoke([message])
     parser = StrOutputParser()
     resposta_str = parser.invoke(resposta_da_ia)
 
+    # Analisando a resposta da IA
     lines = resposta_str.split('\n')
     correto = False
     mensagem = ""

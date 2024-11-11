@@ -11,6 +11,7 @@ class ClassificarNivelInput(BaseModel):
 
 class RespostaRequest(BaseModel):
     questao: str
+    alternativas: str
     resposta: str
 
 class GerarQuestaoRequest(BaseModel):
@@ -57,7 +58,7 @@ def extrair_conteudo_da_questao(questao: str) -> str:
 @app.post("/verificar-resposta-questionario/")
 def api_verificar_resposta_questionario(payload: RespostaRequest):
     """Verifica a resposta de uma questão e fornece feedback detalhado"""
-    resposta = verificar_resposta_questionario(payload.questao, payload.resposta)
+    resposta = verificar_resposta_questionario(payload.questao, payload.alternativas, payload.resposta)
 
     return {
         "correto": resposta["correto"],
