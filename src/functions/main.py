@@ -54,8 +54,7 @@ def classificar_nivel_estudante(resposta1, resposta2, resposta3):
 def gerar_questionario_questao(conteudo):
     message_content = (
         f"Crie uma questão objetiva de múltipla escolha sobre o conteúdo '{conteudo}', adequada para iniciantes. "
-        f"A questão deve ter exatamente quatro alternativas, sendo três claramente **corretas** e uma claramente **incorreta**. "
-        f"A alternativa incorreta deve ser claramente falsa e não deixar dúvidas de que está errada. "
+        f"A questão deve ter exatamente quatro alternativas, com apenas uma das alternativas corretas."
         f"Inclua também o raciocínio necessário para identificar a resposta correta."
     )
 
