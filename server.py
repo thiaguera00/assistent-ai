@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from src.functions.main import *  # Importando suas funções principais
+from src.functions.main import *
 import re
 
 class ClassificarNivelInput(BaseModel):
@@ -35,11 +35,12 @@ def formatar_saida(questao: str) -> str:
 
 @app.post("/gerar-questao/")
 def api_gerar_questao(request: GerarQuestaoRequest):
-    """Gera uma questão com base no conteúdo e nível de dificuldade especificado"""
-    questao = gerar_questionario_questao(request.conteudo, dificuldade=request.nivel)
-    questao_formatada = formatar_saida(questao)
-    
-    return {"questao": questao_formatada}
+    try:
+        questao = gerar_questao(request.conteudo)
+        return questao
+    except Exception as e:
+        return {"erro": str(e)}
+
 
 def extrair_conteudo_da_questao(questao: str) -> str:
     """

@@ -13,12 +13,15 @@ def init_llm():
 
 llm = init_llm()
 
-def gerar_questao(nivel, conteudo):
-    message = HumanMessage(content=f"Crie uma questão de programação em Python para um iniciante no nível {nivel}, com o conteúdo de {conteudo}.")
+def gerar_questao(conteudo):
+    message = HumanMessage(content=f"Crie uma questão de programação em Python para um iniciante, com o conteúdo de {conteudo}. faça uma questão simples para não gerar muita dificuldade")
     resposta = llm.invoke([message])
     parser = StrOutputParser()
+    questao_completa = parser.invoke(resposta)
 
-    return parser.invoke(resposta)
+    return {
+        "questao": questao_completa
+    }
 
 def corrigir_codigo(codigo):
     message = HumanMessage(content=f"Corrija este código em Python e explique os erros:\n{codigo}")
@@ -68,7 +71,6 @@ def gerar_questionario_questao(conteudo):
     }
 
 def verificar_resposta_questionario(enunciado, alternativas, resposta):
-    # Criar uma string com todas as alternativas formatadas
     alternativas_str = "\n".join(alternativas)
 
     message_content = f"""
@@ -93,7 +95,6 @@ def verificar_resposta_questionario(enunciado, alternativas, resposta):
     parser = StrOutputParser()
     resposta_str = parser.invoke(resposta_da_ia)
 
-    # Analisando a resposta da IA
     lines = resposta_str.split('\n')
     correto = False
     mensagem = ""
