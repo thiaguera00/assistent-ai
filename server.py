@@ -17,6 +17,15 @@ class RespostaRequest(BaseModel):
 class GerarQuestaoRequest(BaseModel):
     conteudo: str
 
+class CodigoRequest(BaseModel):
+    questao: str
+    codigo: str
+
+# Modelo de resposta
+class CorrecaoResponse(BaseModel):
+    esta_correto: bool
+    feedback: str
+
 app = FastAPI(title="Assistente IA", description="Um assistente para auxiliar no aprendizado de Python")
 
 app.add_middleware(
@@ -66,12 +75,18 @@ def api_verificar_resposta_questionario(payload: RespostaRequest):
         "mensagem": resposta["mensagem"]
     }
 
-@app.post("/corrigir-codigo/")
-def api_corrigir_codigo(codigo: str):
-    correcao = corrigir_codigo(codigo)
-    correcao_formatada = formatar_saida(correcao)
+@app.post("/corrigir-codigo/", response_model=CorrecaoResponse)
+def api_corrigir_codigo(request: CodigoRequest):
+    """
+    API para corrigir código Python submetido pelo usuário.
+    """
+    try:
+        esta_correto, feedback = corrigir_codigo(request.questao, request.codigo)
+ 
+        return CorrecaoResponse(esta_correto=esta_correto, feedback=feedback)
 
-    return {"correcao": correcao_formatada}
+    except Exception as e:
+        return {"error": f"Erro ao corrigir o código: {str(e)}"}
 
 @app.post("/dar-feedback/")
 def api_dar_feedback(codigo: str):

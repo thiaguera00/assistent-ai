@@ -3,7 +3,9 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.output_parsers import StrOutputParser
 from dotenv import load_dotenv
 import os
-import re
+import subprocess
+import traceback
+from typing import Tuple
 
 def init_llm():
     load_dotenv()
@@ -23,12 +25,52 @@ def gerar_questao(conteudo):
         "questao": questao_completa
     }
 
-def corrigir_codigo(codigo):
-    message = HumanMessage(content=f"Corrija este código em Python e explique os erros:\n{codigo}")
-    resposta = llm.invoke([message])
-    parser = StrOutputParser()
+def corrigir_codigo(questao: str, codigo: str) -> Tuple[bool, str]:
+    """
+    Corrige e avalia um código Python submetido, retornando se está correto e um feedback detalhado.
 
-    return parser.invoke(resposta)
+    Args:
+    - questao: A descrição da tarefa/questão que o código deve resolver.
+    - codigo: O código Python submetido pelo usuário.
+
+    Returns:
+    - Tuple[bool, str]: Um par contendo se o código está correto e o feedback.
+    """
+
+ 
+    message = HumanMessage(content=f"Você recebeu a seguinte questão: {questao}\n\nVerifique se o seguinte código resolve corretamente a questão. Avalie o código e forneça feedback sobre sua correção e melhorias:\n{codigo}")
+    resposta_llm = llm.invoke([message])
+    parser = StrOutputParser()
+    feedback_llm = parser.invoke(resposta_llm)
+
+    try:
+        with open("temp_code.py", "w") as f:
+            f.write(codigo)
+
+        result = subprocess.run(
+            ["python", "temp_code.py"],
+            capture_output=True,
+            text=True,
+            timeout=5 
+        )
+      
+        if result.returncode == 0:
+            if "incorreto" in feedback_llm.lower() or "não está correto" in feedback_llm.lower():
+                esta_correto = False
+            else:
+                esta_correto = True
+            return esta_correto, f"O código foi executado com sucesso. Aqui estão algumas sugestões:\n\n{feedback_llm}"
+
+        else:
+            return False, f"Erro ao executar o código. Saída do erro:\n{result.stderr}\n\nSugestão do LLM sobre o código:\n{feedback_llm}"
+
+    except subprocess.TimeoutExpired:
+        return False, "O código excedeu o limite de tempo de execução. Tente otimizá-lo para evitar loops infinitos ou longas execuções."
+
+    except Exception as e:
+        error_details = traceback.format_exc()
+        return False, f"Ocorreu um erro inesperado ao avaliar o código:\n{error_details}\n\nSugestão do LLM sobre o código:\n{feedback_llm}"
+
 
 def dar_feedback(codigo):
     message = HumanMessage(content=f"Analise este código em Python e sugira melhorias:\n{codigo}")
