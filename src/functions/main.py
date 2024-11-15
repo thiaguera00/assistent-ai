@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 import os
 import subprocess
 import traceback
+import json
+import re
 from typing import Tuple
 
 def init_llm():
@@ -15,11 +17,29 @@ def init_llm():
 
 llm = init_llm()
 
+def parse_markdown_to_json(text: str) -> dict:
+    text = re.sub(r"```json|```", "", text)
+    text = re.sub(r"\*\*(.*?)\*\*", r"\1", text)
+    try:
+        return json.loads(text.strip())
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Erro ao decodificar JSON: {e}")
+
 def gerar_questao(conteudo):
-    message = HumanMessage(content=f"Crie uma questão de programação em Python para um iniciante, com o conteúdo de {conteudo}. faça uma questão simples para não gerar muita dificuldade")
+    message = HumanMessage(
+        content=f"""Crie uma questão de programação em Python para um iniciante sobre o conteúdo: '{conteudo}'.
+        A resposta deve estar no formato de JSON puro, sem quaisquer marcações de Markdown.
+        Formato desejado:
+        {{
+            "titulo": "Título da questão",
+            "objetivo": "Objetivo da questão",
+            "instrucao": "Instrução detalhada",
+            "exemplo": "Um exemplo ou dica se aplicável"
+        }}
+        Certifique-se de que a resposta seja apenas o JSON, sem formatação adicional."""
+    )
     resposta = llm.invoke([message])
-    parser = StrOutputParser()
-    questao_completa = parser.invoke(resposta)
+    questao_completa = parse_markdown_to_json(resposta.content)
 
     return {
         "questao": questao_completa
@@ -36,12 +56,9 @@ def corrigir_codigo(questao: str, codigo: str) -> Tuple[bool, str]:
     Returns:
     - Tuple[bool, str]: Um par contendo se o código está correto e o feedback.
     """
-
- 
     message = HumanMessage(content=f"Você recebeu a seguinte questão: {questao}\n\nVerifique se o seguinte código resolve corretamente a questão. Avalie o código e forneça feedback sobre sua correção e melhorias:\n{codigo}")
     resposta_llm = llm.invoke([message])
-    parser = StrOutputParser()
-    feedback_llm = parser.invoke(resposta_llm)
+    feedback_llm = resposta_llm.content
 
     try:
         with open("temp_code.py", "w") as f:
@@ -75,9 +92,7 @@ def corrigir_codigo(questao: str, codigo: str) -> Tuple[bool, str]:
 def dar_feedback(codigo):
     message = HumanMessage(content=f"Analise este código em Python e sugira melhorias:\n{codigo}")
     resposta = llm.invoke([message])
-    parser = StrOutputParser()
-
-    return parser.invoke(resposta)
+    return resposta.content
 
 def classificar_nivel_estudante(resposta1, resposta2, resposta3):
     message = HumanMessage(
@@ -88,25 +103,21 @@ def classificar_nivel_estudante(resposta1, resposta2, resposta3):
             f"- Linguagem de programação com a qual já teve contato: '{resposta2}'\n"
             f"- Objetivo ao aprender programação: '{resposta3}'\n"
             f"Responda apenas com o nível e uma breve justificativa."
-            f"Responda como se tivesse falando com esse estudante"
         )
     )
     resposta = llm.invoke([message])
-    parser = StrOutputParser()
-
-    return parser.invoke(resposta)
+    return resposta.content
 
 def gerar_questionario_questao(conteudo):
     message_content = (
         f"Crie uma questão objetiva de múltipla escolha sobre o conteúdo '{conteudo}', adequada para iniciantes. "
         f"A questão deve ter exatamente quatro alternativas, com apenas uma das alternativas corretas."
-        f"Inclua também o raciocínio necessário para identificar a resposta correta."
+        f"Inclua também o raciocínio necessário para identificar a resposta correta e retorne no formato JSON puro."
     )
 
     message = HumanMessage(content=message_content)
     resposta = llm.invoke([message])
-    parser = StrOutputParser()
-    questao_completa = parser.invoke(resposta)
+    questao_completa = parse_markdown_to_json(resposta.content)
 
     return {
         "questao": questao_completa
@@ -134,8 +145,7 @@ def verificar_resposta_questionario(enunciado, alternativas, resposta):
 
     message = HumanMessage(content=message_content)
     resposta_da_ia = llm.invoke([message])
-    parser = StrOutputParser()
-    resposta_str = parser.invoke(resposta_da_ia)
+    resposta_str = resposta_da_ia.content
 
     lines = resposta_str.split('\n')
     correto = False
@@ -152,20 +162,3 @@ def verificar_resposta_questionario(enunciado, alternativas, resposta):
         "correto": correto,
         "mensagem": mensagem
     }
-
-def realizar_questionario(conteudo, resposta_usuario):
-    questao = gerar_questionario_questao(conteudo, dificuldade="normal")
-    resultado = verificar_resposta_questionario(questao, resposta_usuario)
-
-    if resultado["correto"]:
-        print("Parabéns! Resposta correta! 🎉")
-        print(f"Explicação: {resultado['mensagem']}")
-    else:
-        print("Resposta incorreta. Vamos tentar com uma questão mais fácil.")
-        print(f"Explicação: {resultado['mensagem']}")
-
-        parser = StrOutputParser()
-        resposta_str = parser.invoke(questao)
-        print("\nAqui está uma nova questão para você praticar:\n")
-        print(resposta_str)
-
