@@ -111,16 +111,44 @@ def classificar_nivel_estudante(resposta1, resposta2, resposta3):
 def gerar_questionario_questao(conteudo):
     message_content = (
         f"Crie uma questão objetiva de múltipla escolha sobre o conteúdo '{conteudo}', adequada para iniciantes. "
-        f"A questão deve ter exatamente quatro alternativas, com apenas uma das alternativas corretas."
-        f"Inclua também o raciocínio necessário para identificar a resposta correta e retorne no formato JSON puro."
+        f"A questão deve ter exatamente quatro alternativas, com apenas uma das alternativas corretas. "
+        f"Inclua também o raciocínio necessário para identificar a resposta correta e retorne no formato JSON puro. "
+        f"O formato deve ser exatamente este: "
+        f"{{'question': 'Pergunta...', 'alternatives': [{{'id': 'A', 'text': 'Alternativa A'}}, ...], 'correctAnswer': 'B', 'reasoning': 'Explicação...'}}"
     )
 
     message = HumanMessage(content=message_content)
     resposta = llm.invoke([message])
-    questao_completa = parse_markdown_to_json(resposta.content)
+
+    if not resposta or not resposta.content.strip():
+        raise ValueError("Erro: o modelo não retornou uma resposta.")
+
+    conteudo_resposta = resposta.content.strip()
+    conteudo_resposta = re.sub(r'^```json\s*', '', conteudo_resposta)
+    conteudo_resposta = re.sub(r'```$', '', conteudo_resposta)
+
+    try:
+        questao_completa = json.loads(conteudo_resposta)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Erro ao decodificar a resposta em JSON: {str(e)} - Resposta recebida: {conteudo_resposta}")
+
+    if not isinstance(questao_completa, dict):
+        raise ValueError("Erro: A resposta não é um objeto JSON válido.")
+
+    if "question" not in questao_completa or "alternatives" not in questao_completa or "correctAnswer" not in questao_completa or "reasoning" not in questao_completa:
+        raise ValueError(f"Erro: A estrutura da resposta está incompleta ou incorreta. Resposta recebida: {questao_completa}")
+
+    if not isinstance(questao_completa["alternatives"], list) or len(questao_completa["alternatives"]) != 4:
+        raise ValueError("Erro: A lista de alternativas deve conter exatamente quatro alternativas.")
+
+    if not all(isinstance(alt, dict) and "id" in alt and "text" in alt for alt in questao_completa["alternatives"]):
+        raise ValueError("Erro: Cada alternativa deve ser um objeto contendo 'id' e 'text'.")
 
     return {
-        "questao": questao_completa
+        "question": questao_completa["question"],
+        "alternatives": questao_completa["alternatives"],
+        "correctAnswer": questao_completa["correctAnswer"],
+        "reasoning": questao_completa["reasoning"]
     }
 
 def verificar_resposta_questionario(enunciado, alternativas, resposta):
