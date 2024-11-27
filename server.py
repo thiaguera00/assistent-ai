@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from src.functions.main import *
+from typing import List
+import random
 
 class ClassificarNivelInput(BaseModel):
     resposta1: str
@@ -70,10 +72,19 @@ def api_dar_feedback(codigo: str):
     return {"feedback": feedback}
 
 @app.post("/gerar-questionario/")
-def api_gerar_questionario(conteudo: str):
+def api_gerar_questionario(conteudos: List[str]):
+    """
+    Endpoint para gerar uma questão objetiva de múltipla escolha.
+    Aceita uma lista de conteúdos e escolhe um aleatoriamente.
+    """
+    if not conteudos or not isinstance(conteudos, list):
+        return {"erro": "Nenhum conteúdo válido fornecido."}
+
+    conteudo_escolhido = random.choice(conteudos)
+
     try:
-        questao = gerar_questionario_questao(conteudo)
-        return questao
+        questao = gerar_questionario_questao(conteudo_escolhido)
+        return questao 
     except Exception as e:
         return {"erro": str(e)}
 

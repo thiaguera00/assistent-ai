@@ -108,7 +108,10 @@ def classificar_nivel_estudante(resposta1, resposta2, resposta3):
     resposta = llm.invoke([message])
     return resposta.content
 
-def gerar_questionario_questao(conteudo):
+def gerar_questionario_questao(conteudo: str):
+    """
+    Gera uma questão objetiva de múltipla escolha baseada no conteúdo fornecido.
+    """
     message_content = (
         f"Crie uma questão objetiva de múltipla escolha sobre o conteúdo '{conteudo}', adequada para iniciantes. "
         f"A questão deve ter exatamente quatro alternativas, com apenas uma das alternativas corretas. "
