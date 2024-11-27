@@ -16,7 +16,7 @@ class RespostaRequest(BaseModel):
     resposta: str
 
 class GerarQuestaoRequest(BaseModel):
-    conteudo: str
+    conteudo: List[str]
 
 class CodigoRequest(BaseModel):
     questao: str
@@ -39,7 +39,12 @@ app.add_middleware(
 @app.post("/gerar-questao/")
 def api_gerar_questao(request: GerarQuestaoRequest):
     try:
-        questao = gerar_questao(request.conteudo)
+        if not request.conteudo:
+            raise ValueError("A lista de conteúdos está vazia.")
+
+        conteudo_escolhido = random.choice(request.conteudo)
+
+        questao = gerar_questao(conteudo_escolhido)
         return questao
     except Exception as e:
         return {"erro": str(e)}
