@@ -56,6 +56,9 @@ def corrigir_codigo(questao: str, codigo: str) -> Tuple[bool, str]:
     Returns:
     - Tuple[bool, str]: Um par contendo se o código está correto e o feedback.
     """
+    if not codigo.strip():
+        return False, "Nenhum código foi fornecido. Por favor, insira um código para avaliação."
+
     message = HumanMessage(content=f"Você recebeu a seguinte questão: {questao}\n\nVerifique se o seguinte código resolve corretamente a questão. Avalie o código e forneça feedback sobre sua correção e melhorias:\n{codigo}")
     resposta_llm = llm.invoke([message])
     feedback_llm = resposta_llm.content
@@ -70,7 +73,7 @@ def corrigir_codigo(questao: str, codigo: str) -> Tuple[bool, str]:
             text=True,
             timeout=5 
         )
-      
+
         if result.returncode == 0:
             if "incorreto" in feedback_llm.lower() or "não está correto" in feedback_llm.lower():
                 esta_correto = False
@@ -87,6 +90,7 @@ def corrigir_codigo(questao: str, codigo: str) -> Tuple[bool, str]:
     except Exception as e:
         error_details = traceback.format_exc()
         return False, f"Ocorreu um erro inesperado ao avaliar o código:\n{error_details}\n\nSugestão do LLM sobre o código:\n{feedback_llm}"
+
 
 
 def dar_feedback(codigo):
