@@ -108,16 +108,27 @@ def classificar_nivel_estudante(resposta1, resposta2, resposta3):
     resposta = llm.invoke([message])
     return resposta.content
 
-def gerar_questionario_questao(conteudo: str):
+def gerar_questionario_questao(conteudos: str):
     """
     Gera uma questão objetiva de múltipla escolha baseada no conteúdo fornecido.
     """
     message_content = (
-        f"Crie uma questão objetiva de múltipla escolha sobre o conteúdo '{conteudo}', adequada para iniciantes. "
+        f"Crie uma questão objetiva de múltipla escolha sobre os conteúdos '{conteudos}', adequada para iniciantes. "
         f"A questão deve ter exatamente quatro alternativas, com apenas uma das alternativas corretas. "
-        f"Inclua também o raciocínio necessário para identificar a resposta correta e retorne no formato JSON puro. "
+        f"Cada alternativa deve incluir uma descrição explicando por que está certa ou errada. "
+        f"Inclua também o raciocínio geral necessário para identificar a resposta correta e retorne no formato JSON puro. "
         f"O formato deve ser exatamente este: "
-        f"{{'question': 'Pergunta...', 'alternatives': [{{'id': 'A', 'text': 'Alternativa A'}}, ...], 'correctAnswer': 'B', 'reasoning': 'Explicação...'}}"
+        f"{{"
+        f"  'question': 'Pergunta...', "
+        f"  'alternatives': ["
+        f"    {{'id': 'A', 'text': 'Alternativa A', 'description': 'Explicação para A'}}, "
+        f"    {{'id': 'B', 'text': 'Alternativa B', 'description': 'Explicação para B'}}, "
+        f"    {{'id': 'C', 'text': 'Alternativa C', 'description': 'Explicação para C'}}, "
+        f"    {{'id': 'D', 'text': 'Alternativa D', 'description': 'Explicação para D'}}"
+        f"  ], "
+        f"  'correctAnswer': 'B', "
+        f"  'reasoning': 'Explicação geral sobre a resposta correta.'"
+        f"}}"
     )
 
     message = HumanMessage(content=message_content)
@@ -144,8 +155,8 @@ def gerar_questionario_questao(conteudo: str):
     if not isinstance(questao_completa["alternatives"], list) or len(questao_completa["alternatives"]) != 4:
         raise ValueError("Erro: A lista de alternativas deve conter exatamente quatro alternativas.")
 
-    if not all(isinstance(alt, dict) and "id" in alt and "text" in alt for alt in questao_completa["alternatives"]):
-        raise ValueError("Erro: Cada alternativa deve ser um objeto contendo 'id' e 'text'.")
+    if not all(isinstance(alt, dict) and "id" in alt and "text" in alt and "description" in alt for alt in questao_completa["alternatives"]):
+        raise ValueError("Erro: Cada alternativa deve ser um objeto contendo 'id', 'text' e 'description'.")
 
     return {
         "question": questao_completa["question"],
