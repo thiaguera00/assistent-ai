@@ -76,6 +76,11 @@ def api_dar_feedback(codigo: str):
     feedback = dar_feedback(codigo)
     return {"feedback": feedback}
 
+@app.post("/desafio/") 
+def api_desafio():
+    desafio = gerar_desafio_para_usuario()
+    return {"desafio": desafio}
+
 @app.post("/gerar-questionario/")
 def api_gerar_questionario(conteudos: List[str]):
     """

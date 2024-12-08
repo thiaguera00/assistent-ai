@@ -119,6 +119,7 @@ def gerar_questionario_questao(conteudos: str):
     message_content = (
         f"Crie uma questão objetiva de múltipla escolha sobre os conteúdos '{conteudos}', adequada para iniciantes. "
         f"A questão deve ter exatamente quatro alternativas, com apenas uma das alternativas corretas. "
+        f"A alternativa correta deve ser selecionada aleatoriamente entre 'A', 'B', 'C' e 'D'. "
         f"Cada alternativa deve incluir uma descrição explicando por que está certa ou errada. "
         f"Inclua também o raciocínio geral necessário para identificar a resposta correta e retorne no formato JSON puro. "
         f"O formato deve ser exatamente este: "
@@ -130,7 +131,7 @@ def gerar_questionario_questao(conteudos: str):
         f"    {{'id': 'C', 'text': 'Alternativa C', 'description': 'Explicação para C'}}, "
         f"    {{'id': 'D', 'text': 'Alternativa D', 'description': 'Explicação para D'}}"
         f"  ], "
-        f"  'correctAnswer': 'B', "
+        f"  'correctAnswer': 'Uma das alternativas (A, B, C ou D)', "
         f"  'reasoning': 'Explicação geral sobre a resposta correta.'"
         f"}}"
     )
@@ -162,12 +163,52 @@ def gerar_questionario_questao(conteudos: str):
     if not all(isinstance(alt, dict) and "id" in alt and "text" in alt and "description" in alt for alt in questao_completa["alternatives"]):
         raise ValueError("Erro: Cada alternativa deve ser um objeto contendo 'id', 'text' e 'description'.")
 
+    if questao_completa["correctAnswer"] not in ['A', 'B', 'C', 'D']:
+        raise ValueError("Erro: A resposta correta deve ser uma das alternativas 'A', 'B', 'C' ou 'D'.")
+
     return {
         "question": questao_completa["question"],
         "alternatives": questao_completa["alternatives"],
         "correctAnswer": questao_completa["correctAnswer"],
         "reasoning": questao_completa["reasoning"]
     }
+
+def gerar_desafio_para_usuario():
+    """
+    Gera um desafio técnico baseado nos conteúdos aprendidos nas fases anteriores e retorna como JSON.
+    """
+    conteudo_aprendido = (
+        "O usuário aprendeu os seguintes conteúdos: "
+        "1. Algoritmo, Variáveis, Constantes, Tipos de dados, Operadores Aritméticos e Lógicos; "
+        "2. Comando print, Declaração de variáveis, Tipos de variáveis, Máscara de formatação, Input; "
+        "3. Operadores aritméticos, relacionais e lógicos, Estruturas de decisão (if, elif, else), Laços de repetição (for, while); "
+        "4. Funções e sua sintaxe."
+    )
+    
+    desafio_prompt = (
+        f"Baseado nos conteúdos aprendidos pelo usuário ({conteudo_aprendido}), crie um desafio técnico que "
+        f"envolva Python e que o usuário possa utilizar como um projeto para o portfólio. "
+        f"O desafio deve ser criativo, relevante e adequado para um iniciante que aprendeu os tópicos mencionados. "
+        f"Garanta que o desafio inclua uma breve descrição do que deve ser desenvolvido, os requisitos principais e "
+        f"uma explicação de como ele pode ser útil ou interessante para o portfólio. "
+        f"Formato esperado de resposta (apenas JSON, sem Markdown): "
+        f"{{"
+        f"  \"descricao\": \"Descrição breve do desafio\","
+        f"  \"requisitos\": [\"Requisito 1\", \"Requisito 2\", \"...\"],"
+        f"  \"explicacao\": \"Explicação de como o projeto é útil para o portfólio\""
+        f"}}"
+    )
+    
+    message = HumanMessage(content=desafio_prompt)
+    resposta = llm.invoke([message])
+    
+    try:
+        desafio_json = parse_markdown_to_json(resposta.content)
+    except ValueError as e:
+        raise ValueError(f"Erro ao processar o desafio gerado: {e}")
+
+    return desafio_json
+
 
 def verificar_resposta_questionario(enunciado, alternativas, resposta):
     alternativas_str = "\n".join(alternativas)
