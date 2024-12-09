@@ -45,23 +45,50 @@ def gerar_questao(conteudo):
         "questao": questao_completa
     }
 
-def corrigir_codigo(questao: str, codigo: str) -> Tuple[bool, str]:
+def corrigir_codigo(questao: str, codigo: str) -> dict:
     """
-    Corrige e avalia um código Python submetido, retornando se está correto e um feedback detalhado.
+    Corrige e avalia um código Python submetido, retornando se está correto e um feedback estruturado no formato JSON.
 
     Args:
     - questao: A descrição da tarefa/questão que o código deve resolver.
     - codigo: O código Python submetido pelo usuário.
 
     Returns:
-    - Tuple[bool, str]: Um par contendo se o código está correto e o feedback.
+    - dict: Um dicionário contendo as chaves "esta_correto" e "feedback".
     """
+    def limpar_markdown_para_json(texto: str) -> dict:
+        """
+        Remove formatação de Markdown e estrutura o feedback em JSON.
+        """
+        texto = re.sub(r"\*\*(.*?)\*\*", r"\1", texto)
+        texto = re.sub(r"`(.*?)`", r"\1", texto)
+        texto = re.sub(r"```.*?```", "", texto, flags=re.DOTALL)
+        texto = texto.strip()
+
+        partes = re.split(r"Feedback:|Correção:|Melhorias:", texto)
+        partes = [p.strip() for p in partes if p.strip()]
+
+        feedback = {
+            "resumo": partes[0] if len(partes) > 0 else "",
+            "correcao": partes[1] if len(partes) > 1 else "",
+            "melhorias": partes[2] if len(partes) > 2 else ""
+        }
+
+        return feedback
+
     if not codigo.strip():
-        return False, "Nenhum código foi fornecido. Por favor, insira um código para avaliação."
+        return {
+            "esta_correto": False,
+            "feedback": {
+                "resumo": "Nenhum código foi fornecido.",
+                "correcao": "",
+                "melhorias": ""
+            }
+        }
 
     message = HumanMessage(content=f"Você recebeu a seguinte questão: {questao}\n\nVerifique se o seguinte código resolve corretamente a questão. Avalie o código e forneça feedback sobre sua correção e melhorias:\n{codigo}")
     resposta_llm = llm.invoke([message])
-    feedback_llm = resposta_llm.content
+    feedback_llm = limpar_markdown_para_json(resposta_llm.content.strip())
 
     try:
         with open("temp_code.py", "w") as f:
@@ -71,25 +98,46 @@ def corrigir_codigo(questao: str, codigo: str) -> Tuple[bool, str]:
             ["python", "temp_code.py"],
             capture_output=True,
             text=True,
-            timeout=5 
+            timeout=5
         )
 
         if result.returncode == 0:
-            if "incorreto" in feedback_llm.lower() or "não está correto" in feedback_llm.lower():
-                esta_correto = False
-            else:
-                esta_correto = True
-            return esta_correto, f"O código foi executado com sucesso. Aqui estão algumas sugestões:\n\n{feedback_llm}"
+            esta_correto = "incorreto" not in resposta_llm.content.lower() and "não está correto" not in resposta_llm.content.lower()
+            return {
+                "esta_correto": esta_correto,
+                "feedback": feedback_llm
+            }
 
         else:
-            return False, f"Erro ao executar o código. Saída do erro:\n{result.stderr}\n\nSugestão do LLM sobre o código:\n{feedback_llm}"
+            return {
+                "esta_correto": False,
+                "feedback": {
+                    "resumo": "Erro ao executar o código.",
+                    "correcao": result.stderr.strip(),
+                    "melhorias": feedback_llm.get("melhorias", "")
+                }
+            }
 
     except subprocess.TimeoutExpired:
-        return False, "O código excedeu o limite de tempo de execução. Tente otimizá-lo para evitar loops infinitos ou longas execuções."
+        return {
+            "esta_correto": False,
+            "feedback": {
+                "resumo": "O código excedeu o limite de tempo de execução.",
+                "correcao": "",
+                "melhorias": "Tente otimizá-lo para evitar loops infinitos ou longas execuções."
+            }
+        }
 
     except Exception as e:
         error_details = traceback.format_exc()
-        return False, f"Ocorreu um erro inesperado ao avaliar o código:\n{error_details}\n\nSugestão do LLM sobre o código:\n{feedback_llm}"
+        return {
+            "esta_correto": False,
+            "feedback": {
+                "resumo": "Ocorreu um erro inesperado ao avaliar o código.",
+                "correcao": error_details,
+                "melhorias": feedback_llm.get("melhorias", "")
+            }
+        }
 
 
 

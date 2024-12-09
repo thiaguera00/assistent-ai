@@ -22,9 +22,14 @@ class CodigoRequest(BaseModel):
     questao: str
     codigo: str
 
+class Feedback(BaseModel):
+    resumo: str
+    correcao: str
+    melhorias: str
+
 class CorrecaoResponse(BaseModel):
     esta_correto: bool
-    feedback: str
+    feedback: Feedback
 
 app = FastAPI(title="Assistente IA", description="Um assistente para auxiliar no aprendizado de Python")
 
@@ -65,8 +70,17 @@ def api_corrigir_codigo(request: CodigoRequest):
     API para corrigir código Python submetido pelo usuário.
     """
     try:
-        esta_correto, feedback = corrigir_codigo(request.questao, request.codigo)
-        return CorrecaoResponse(esta_correto=esta_correto, feedback=feedback)
+        resposta = corrigir_codigo(request.questao, request.codigo)
+        feedback = Feedback(
+            resumo=resposta["feedback"]["resumo"],
+            correcao=resposta["feedback"]["correcao"],
+            melhorias=resposta["feedback"]["melhorias"]
+        )
+
+        return CorrecaoResponse(
+            esta_correto=resposta["esta_correto"],
+            feedback=feedback
+        )
 
     except Exception as e:
         return {"error": f"Erro ao corrigir o código: {str(e)}"}
