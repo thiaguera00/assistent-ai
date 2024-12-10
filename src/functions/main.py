@@ -86,7 +86,8 @@ def corrigir_codigo(questao: str, codigo: str) -> dict:
             }
         }
 
-    message = HumanMessage(content=f"Você recebeu a seguinte questão: {questao}\n\nVerifique se o seguinte código resolve corretamente a questão. Avalie o código e forneça feedback sobre sua correção e melhorias:\n{codigo}")
+    message = HumanMessage(
+        content=f"Você recebeu a seguinte questão: {questao}\n\n Verifique se o seguinte código resolve corretamente a questão. Avalie o código e forneça feedback resumido sobre sua correção e melhorias:\n{codigo}")
     resposta_llm = llm.invoke([message])
     feedback_llm = limpar_markdown_para_json(resposta_llm.content.strip())
 
