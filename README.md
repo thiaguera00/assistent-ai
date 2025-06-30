@@ -1,4 +1,4 @@
-## IA asssistente em Python
+## IA asssistente
 Esse assistente está usando o LangChain para criar um modelo do gemini e gerar um assistente para auxiliar o aprendizado em Python
 ## Instalação
 É necessário o Python instalado na sua maquina e o pip. </br>
